@@ -23,11 +23,13 @@ import java.util.UUID;
 import org.apache.wicket.Component;
 import org.apache.wicket.Page;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.behavior.AbstractAjaxBehavior;
+import org.apache.wicket.behavior.Behavior;
+import org.apache.wicket.behavior.IBehaviorListener;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.request.handler.resource.ResourceStreamRequestHandler;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.request.resource.ContentDisposition;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
@@ -38,9 +40,10 @@ import org.apache.wicket.util.resource.IResourceStream;
  * https://cwiki.apache.org/confluence/display/WICKET/AJAX+update+and+file+download+in+one+blow</href>
  * 
  */
-public class AjaxDownload extends AbstractAjaxBehavior {
+public class AjaxDownload extends Behavior implements IBehaviorListener {
 	private static final long serialVersionUID = 1L;
 	private boolean addAntiCache;
+	private Component component;
 	private String fileName;
 	private IResourceStream resourceStream;
 	private final String iframeId;
@@ -59,22 +62,27 @@ public class AjaxDownload extends AbstractAjaxBehavior {
 	 * Call this method to initiate the download.
 	 */
 	public void initiate(AjaxRequestTarget target) {
-		StringBuilder url = new StringBuilder(getCallbackUrl());
+		PageParameters pp = new PageParameters();
 
 		if (addAntiCache) {
-			url.append(url.indexOf("?") > -1 ? "&" : "?")
-				.append("antiCache=").append(System.currentTimeMillis());
+			pp.add("antiCache", System.currentTimeMillis());
 		}
-		target.appendJavaScript(String.format("$('#%s').attr('src', '%s');", iframeId, url.toString()));
+		String url = component.urlFor(this, IBehaviorListener.INTERFACE, pp).toString();
+		target.appendJavaScript(String.format("$('#%s').attr('src', '%s');", iframeId, url));
 	}
 
 	@Override
-	protected void onBind() {
-		super.onBind();
-		// it is impossible to get page by id anyway
-		if (!(getComponent() instanceof Page)) {
-			getComponent().setOutputMarkupId(true);
+	public void bind(Component component) {
+		this.component = component;
+		if (!(component instanceof Page)) {
+			component.setOutputMarkupId(true);
 		}
+	}
+
+	@Override
+	public void unbind(Component component) {
+		this.component = null;
+		super.unbind(component);
 	}
 
 	private static ResourceReference newResourceReference() {
@@ -92,7 +100,7 @@ public class AjaxDownload extends AbstractAjaxBehavior {
 	public void onRequest() {
 		ResourceStreamRequestHandler handler = new ResourceStreamRequestHandler(getResourceStream(), getFileName());
 		handler.setContentDisposition(getContentDisposition());
-		getComponent().getRequestCycle().scheduleRequestHandlerAfterCurrent(handler);
+		component.getRequestCycle().scheduleRequestHandlerAfterCurrent(handler);
 	}
 
 	protected ContentDisposition getContentDisposition() {
@@ -123,5 +131,4 @@ public class AjaxDownload extends AbstractAjaxBehavior {
 	public void setResourceStream(IResourceStream resourceStream) {
 		this.resourceStream = resourceStream;
 	}
-
 }
