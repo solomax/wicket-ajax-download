@@ -15,8 +15,11 @@
 		</div>
 		<div id="bd">
 			<form wicket:id="form">
-				<input type="button" wicket:id="download" value="Download"/>
+				<input type="button" wicket:id="page-download" value="Page Download"/>
+				<input type="button" wicket:id="form-reload" value="Form Reload"/>
+				<input type="button" wicket:id="form-download" value="Form Download"/>
 			</form>
+			<div id="iframe-count"></div>
 			<div wicket:id="feedback"></div>
 			<p>
 				Please mention the correct Wicket version: <wicket:container wicket:id="version">1.5-SNAPSHOT</wicket:container>.

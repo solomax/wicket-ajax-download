@@ -16,6 +16,7 @@ import org.apache.wicket.util.resource.StringResourceStream;
 public class HomePage extends WebPage {
 	private static final long serialVersionUID = 1L;
 	Logger log = LogManager.getLogger(HomePage.class);
+	private long counter = 0;
 
 	public HomePage(final PageParameters parameters) {
 		super(parameters);
@@ -28,7 +29,7 @@ public class HomePage extends WebPage {
 
 		final FeedbackPanel feedback = new FeedbackPanel("feedback");
 		final Form<Void> form = new Form<>("form");
-		add(feedback.setOutputMarkupId(true), form.add(new AjaxButton("download") {
+		form.add(new AjaxButton("page-download") {
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -46,11 +47,49 @@ public class HomePage extends WebPage {
 				// repaint the feedback panel so errors are shown
 				target.add(feedback);
 			}
-		}));
+		});
+		final AjaxDownload download1 = new AjaxDownload();
+		form.add(download1);
+		form.add(new AjaxButton("form-reload") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+				counter++;
+				target.add(form);
+				target.appendJavaScript("$('#iframe-count').text('Currently on the page ' + $('iframe').length + ' iframes');");
+			}
+
+			@Override
+			protected void onError(AjaxRequestTarget target, Form<?> form) {
+				// repaint the feedback panel so errors are shown
+				target.add(feedback);
+			}
+		});
+		form.add(new AjaxButton("form-download") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+				download1.setFileName(String.format("test%s.txt", counter));
+				download1.setResourceStream(new StringResourceStream(String.format("bla-bla-bla %s", counter), "text/plain"));
+				download1.initiate(target);
+
+				// repaint the feedback panel so that it is hidden
+				target.add(feedback);
+			}
+
+			@Override
+			protected void onError(AjaxRequestTarget target, Form<?> form) {
+				// repaint the feedback panel so errors are shown
+				target.add(feedback);
+			}
+		});
+		add(feedback.setOutputMarkupId(true), form.setOutputMarkupId(true));
 
 		add(new WebSocketBehavior() {
 			private static final long serialVersionUID = 1L;
-			
+
 			@Override
 			protected void onClose(ClosedMessage message) {
 				super.onClose(message);
