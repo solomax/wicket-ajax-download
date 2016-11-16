@@ -21,10 +21,10 @@ package org.apache.solomax;
 import java.util.UUID;
 
 import org.apache.wicket.Component;
+import org.apache.wicket.IResourceListener;
 import org.apache.wicket.Page;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.behavior.Behavior;
-import org.apache.wicket.behavior.IBehaviorListener;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
@@ -40,7 +40,7 @@ import org.apache.wicket.util.resource.IResourceStream;
  * https://cwiki.apache.org/confluence/display/WICKET/AJAX+update+and+file+download+in+one+blow</href>
  * 
  */
-public class AjaxDownload extends Behavior implements IBehaviorListener {
+public class AjaxDownload extends Behavior implements IResourceListener {
 	private static final long serialVersionUID = 1L;
 	private boolean addAntiCache;
 	private Component component;
@@ -67,7 +67,7 @@ public class AjaxDownload extends Behavior implements IBehaviorListener {
 		if (addAntiCache) {
 			pp.add("antiCache", System.currentTimeMillis());
 		}
-		String url = component.urlFor(this, IBehaviorListener.INTERFACE, pp).toString();
+		String url = component.urlFor(this, IResourceListener.INTERFACE, pp).toString();
 		target.appendJavaScript(String.format("$('#%s').attr('src', '%s');", iframeId, url));
 	}
 
@@ -97,7 +97,7 @@ public class AjaxDownload extends Behavior implements IBehaviorListener {
 	}
 
 	@Override
-	public void onRequest() {
+	public void onResourceRequested() {
 		ResourceStreamRequestHandler handler = new ResourceStreamRequestHandler(getResourceStream(), getFileName());
 		handler.setContentDisposition(getContentDisposition());
 		component.getRequestCycle().scheduleRequestHandlerAfterCurrent(handler);
